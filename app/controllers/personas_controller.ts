@@ -2,7 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import { PersonaService } from '#services/persona_service'
 import { ResponseHelper } from '#utils/response_helper'
 import { createPersonaValidator, updatePersonaValidator } from '#validators/persona'
-import { registrarAuditoria } from '#services/auditoria_service'
+import { obtenerAuditorias, registrarAuditoria } from '#services/auditoria_service'
 
 export default class PersonasController {
   private personaService = new PersonaService()
@@ -52,7 +52,7 @@ export default class PersonasController {
   async show({ params, response }: HttpContext) {
     try {
       const persona = await this.personaService.getById(params.id)
-      if (!persona) return ResponseHelper.error(response, 'Persona no encontrada', 404)
+      if (!persona) return ResponseHelper.error(response, 'Persona no encontrada SHOW', 404)
       return ResponseHelper.success(response, 'Persona encontrada', persona)
     } catch (error) {
       return ResponseHelper.error(response, 'Error al obtener persona', 400, error)
@@ -63,7 +63,7 @@ export default class PersonasController {
     try {
       const payload = await request.validateUsing(updatePersonaValidator)
       const persona = await this.personaService.update(params.id, payload)
-      if (!persona) return ResponseHelper.error(response, 'Persona no encontrada', 404)
+      if (!persona) return ResponseHelper.error(response, 'Persona no encontrada UPDATE', 404)
       await registrarAuditoria({
         accion: 'actualizar',
         entidad: 'persona',
@@ -82,7 +82,7 @@ export default class PersonasController {
   async destroy({ params, response, user }: HttpContext) {
     try {
       const ok = await this.personaService.delete(params.id)
-      if (!ok) return ResponseHelper.error(response, 'Persona no encontrada', 404)
+      if (!ok) return ResponseHelper.error(response, 'Persona no encontrada DESTROY', 404)
       await registrarAuditoria({
         accion: 'eliminar',
         entidad: 'persona',
@@ -95,6 +95,15 @@ export default class PersonasController {
       return ResponseHelper.success(response, 'Persona eliminada exitosamente')
     } catch (error) {
       return ResponseHelper.error(response, 'Error al eliminar persona', 400, error)
+    }
+  }
+
+  async auditoriasPersonas({ response }: HttpContext) {
+    try {
+      const auditorias = await obtenerAuditorias()
+      return ResponseHelper.success(response, 'Lista de auditorías', auditorias)
+    } catch (error) {
+      return ResponseHelper.error(response, 'Error al obtener auditorías', 500, error)
     }
   }
 }

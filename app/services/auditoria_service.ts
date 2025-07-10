@@ -6,19 +6,33 @@ const dbName = process.env.MONGO_DB || 'crud-personas'
 const collectionName = 'auditoria_personas'
 
 export async function registrarAuditoria(data: AuditoriaLogDto): Promise<void> {
-  // Abre y cierra el cliente en cada llamada
   const client = new MongoClient(uri)
   try {
     await client.connect()
     const db = client.db(dbName)
     const collection = db.collection(collectionName)
     await collection.insertOne(data)
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.error('Error al registrar auditoría en MongoDB:', error?.message || error)
-    }
-    // No lances el error, solo lo logueas si quieres
   } finally {
-    await client.close().catch(() => {}) // No importa si ya estaba cerrado
+    await client.close().catch(() => {})
+  }
+}
+
+export async function obtenerAuditorias(filtro: object = {}): Promise<AuditoriaLogDto[]> {
+  const client = new MongoClient(uri)
+  try {
+    await client.connect()
+    const db = client.db(dbName)
+    const collection = db.collection(collectionName)
+    const results = await collection.find(filtro).toArray()
+    return results.map((doc) => ({
+      accion: doc.accion,
+      entidad: doc.entidad,
+      personaId: doc.personaId,
+      fecha: doc.fecha,
+      datos: doc.datos,
+      usuario: doc.usuario,
+    }))
+  } finally {
+    await client.close().catch(() => {})
   }
 }

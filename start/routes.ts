@@ -12,7 +12,7 @@ router
   .group(() => {
     router.post('/logout', [AuthController, 'logout'])
     router.get('/me', [AuthController, 'me'])
-
+    router.get('/personas/auditorias', [PersonaController, 'auditoriasPersonas'])
     router.get('/personas', [PersonaController, 'index'])
     router.get('/personas/:id', [PersonaController, 'show'])
     router.post('/personas', [PersonaController, 'store'])
