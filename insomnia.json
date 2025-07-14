@@ -1,0 +1,413 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2025-07-10T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2024.3.0",
+  "resources": [
+    {
+      "_id": "wrk_clashnaval_001",
+      "name": "ClashNaval API",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_clashnaval_001",
+      "_type": "environment",
+      "parentId": "wrk_clashnaval_001",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3333",
+        "jwt": "",
+        "room_id": "",
+        "game_id": ""
+      }
+    },
+    {
+      "_id": "fld_auth_001",
+      "_type": "request_group",
+      "parentId": "wrk_clashnaval_001",
+      "name": "Auth"
+    },
+    {
+      "_id": "req_register_001",
+      "_type": "request",
+      "parentId": "fld_auth_001",
+      "name": "Register",
+      "method": "POST",
+      "url": "{{ base_url }}/register",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Saul Test\",\n  \"email\": \"saul@example.com\",\n  \"password\": \"123456\"\n}"
+      }
+    },
+    {
+      "_id": "req_login_001",
+      "_type": "request",
+      "parentId": "fld_auth_001",
+      "name": "Login",
+      "method": "POST",
+      "url": "{{ base_url }}/login",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"saul@example.com\",\n  \"password\": \"123456\"\n}"
+      }
+    },
+    {
+      "_id": "req_logout_001",
+      "_type": "request",
+      "parentId": "fld_auth_001",
+      "name": "Logout",
+      "method": "POST",
+      "url": "{{ base_url }}/logout",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_me_001",
+      "_type": "request",
+      "parentId": "fld_auth_001",
+      "name": "Me",
+      "method": "GET",
+      "url": "{{ base_url }}/me",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+
+    {
+      "_id": "fld_rooms_001",
+      "_type": "request_group",
+      "parentId": "wrk_clashnaval_001",
+      "name": "Rooms"
+    },
+    {
+      "_id": "req_rooms_index_001",
+      "_type": "request",
+      "parentId": "fld_rooms_001",
+      "name": "List Rooms",
+      "method": "GET",
+      "url": "{{ base_url }}/rooms",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_rooms_create_001",
+      "_type": "request",
+      "parentId": "fld_rooms_001",
+      "name": "Create Room",
+      "method": "POST",
+      "url": "{{ base_url }}/rooms",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Sala de ejemplo\"\n}"
+      }
+    },
+    {
+      "_id": "req_rooms_show_001",
+      "_type": "request",
+      "parentId": "fld_rooms_001",
+      "name": "Get Room by ID",
+      "method": "GET",
+      "url": "{{ base_url }}/rooms/{{ room_id }}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_rooms_join_001",
+      "_type": "request",
+      "parentId": "fld_rooms_001",
+      "name": "Join Room",
+      "method": "POST",
+      "url": "{{ base_url }}/rooms/{{ room_id }}/join",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_rooms_start_001",
+      "_type": "request",
+      "parentId": "fld_rooms_001",
+      "name": "Start Room",
+      "method": "POST",
+      "url": "{{ base_url }}/rooms/{{ room_id }}/start",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_rooms_leave_001",
+      "_type": "request",
+      "parentId": "fld_rooms_001",
+      "name": "Leave Room",
+      "method": "POST",
+      "url": "{{ base_url }}/rooms/{{ room_id }}/leave",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_rooms_status_001",
+      "_type": "request",
+      "parentId": "fld_rooms_001",
+      "name": "Room Status",
+      "method": "GET",
+      "url": "{{ base_url }}/rooms/{{ room_id }}/status",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+
+    {
+      "_id": "fld_games_001",
+      "_type": "request_group",
+      "parentId": "wrk_clashnaval_001",
+      "name": "Games"
+    },
+    {
+      "_id": "req_games_state_001",
+      "_type": "request",
+      "parentId": "fld_games_001",
+      "name": "Get Game State",
+      "method": "GET",
+      "url": "{{ base_url }}/games/{{ game_id }}/state",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_games_attack_001",
+      "_type": "request",
+      "parentId": "fld_games_001",
+      "name": "Attack",
+      "method": "POST",
+      "url": "{{ base_url }}/games/{{ game_id }}/attack",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"x\": 2,\n  \"y\": 3\n}"
+      }
+    },
+    {
+      "_id": "req_games_history_001",
+      "_type": "request",
+      "parentId": "fld_games_001",
+      "name": "Game History",
+      "method": "GET",
+      "url": "{{ base_url }}/games/history",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_games_details_001",
+      "_type": "request",
+      "parentId": "fld_games_001",
+      "name": "Game Details",
+      "method": "GET",
+      "url": "{{ base_url }}/games/{{ game_id }}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_games_abandon_001",
+      "_type": "request",
+      "parentId": "fld_games_001",
+      "name": "Abandon Game",
+      "method": "POST",
+      "url": "{{ base_url }}/games/{{ game_id }}/abandon",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+
+    {
+      "_id": "fld_stats_001",
+      "_type": "request_group",
+      "parentId": "wrk_clashnaval_001",
+      "name": "Stats"
+    },
+    {
+      "_id": "req_stats_index_001",
+      "_type": "request",
+      "parentId": "fld_stats_001",
+      "name": "Stats Summary",
+      "method": "GET",
+      "url": "{{ base_url }}/stats",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_stats_won_001",
+      "_type": "request",
+      "parentId": "fld_stats_001",
+      "name": "Stats Won Games",
+      "method": "GET",
+      "url": "{{ base_url }}/stats/won",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_stats_lost_001",
+      "_type": "request",
+      "parentId": "fld_stats_001",
+      "name": "Stats Lost Games",
+      "method": "GET",
+      "url": "{{ base_url }}/stats/lost",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_stats_game_detail_001",
+      "_type": "request",
+      "parentId": "fld_stats_001",
+      "name": "Stats Game Detail",
+      "method": "GET",
+      "url": "{{ base_url }}/stats/game/{{ game_id }}",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+
+    {
+      "_id": "fld_profile_001",
+      "_type": "request_group",
+      "parentId": "wrk_clashnaval_001",
+      "name": "Profile"
+    },
+    {
+      "_id": "req_profile_show_001",
+      "_type": "request",
+      "parentId": "fld_profile_001",
+      "name": "Show Profile",
+      "method": "GET",
+      "url": "{{ base_url }}/profile",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    },
+    {
+      "_id": "req_profile_update_001",
+      "_type": "request",
+      "parentId": "fld_profile_001",
+      "name": "Update Profile",
+      "method": "PUT",
+      "url": "{{ base_url }}/profile",
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"name\": \"Nuevo Nombre\",\n  \"email\": \"nuevo@email.com\"\n}"
+      }
+    },
+    {
+      "_id": "req_profile_destroy_001",
+      "_type": "request",
+      "parentId": "fld_profile_001",
+      "name": "Delete Profile",
+      "method": "DELETE",
+      "url": "{{ base_url }}/profile",
+      "headers": [
+        {
+          "name": "Authorization",
+          "value": "Bearer {{ jwt }}"
+        }
+      ]
+    }
+  ]
+}

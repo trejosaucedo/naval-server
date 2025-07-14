@@ -1,19 +1,17 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
-  protected tableName = 'personas'
+  protected tableName = 'rooms'
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.uuid('id').primary()
-      table.string('nombre').notNullable()
-      table.string('apellido_paterno').notNullable()
-      table.string('apellido_materno').notNullable()
-      table.integer('edad').notNullable()
-      table.enu('genero', ['masculino', 'femenino']).notNullable()
+      table.string('name').notNullable()
+      table.uuid('player_1_id').notNullable().references('id').inTable('users').onDelete('CASCADE')
+      table.uuid('player_2_id').nullable().references('id').inTable('users').onDelete('SET NULL')
+      table.enum('status', ['waiting', 'full', 'started', 'finished']).defaultTo('waiting')
       table.timestamp('created_at', { useTz: true }).notNullable()
       table.timestamp('updated_at', { useTz: true }).notNullable()
-      table.timestamp('deleted_at', { useTz: true }).nullable() // <= NUEVO
     })
   }
 
