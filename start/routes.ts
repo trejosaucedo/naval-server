@@ -46,8 +46,7 @@ router
     router.get('/stats/won', [StatsController, 'wonGames'])
     router.get('/stats/lost', [StatsController, 'lostGames'])
     router.get('/stats/game/:id', [StatsController, 'gameDetail'])
-  })
-  .use(middleware.auth())
+  }).use(middleware.auth())
 
 router
   .group(() => {

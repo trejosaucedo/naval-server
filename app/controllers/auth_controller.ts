@@ -16,19 +16,25 @@ export default class AuthController {
     }
   }
 
-  async login({ request, response }: HttpContext) {
-    console.log(request.body())
-    try {
-      const payload = await request.validateUsing(loginValidator)
-      const result = await this.userService.login(payload)
-      if (!result) {
-        return ResponseHelper.error(response, 'Credenciales inválidas', 401)
-      }
-      return ResponseHelper.success(response, 'Login exitoso', result)
-    } catch (error) {
-      return ResponseHelper.error(response, 'Error al iniciar sesión', 400, error)
+async login({ request, response }: HttpContext) {
+  try {
+    const payload = await request.validateUsing(loginValidator)
+    const result = await this.userService.login(payload)
+    if (!result) {
+      return ResponseHelper.error(response, 'Credenciales inválidas', 401)
     }
+
+    // NO seteas cookie aquí
+    return ResponseHelper.success(response, 'Login exitoso', {
+      user: result.user,
+      token: result.token
+    })
+  } catch (error) {
+    return ResponseHelper.error(response, 'Error al iniciar sesión', 400, error)
   }
+}
+
+
 
   async me({ user, response }: HttpContext) {
     try {
@@ -41,7 +47,10 @@ export default class AuthController {
     }
   }
 
-  async logout({ response }: HttpContext) {
-    return ResponseHelper.success(response, 'Logout exitoso')
-  }
+ async logout({ response }: HttpContext) {
+  // Limpia la cookie
+  response.clearCookie('access_token')
+  return ResponseHelper.success(response, 'Logout exitoso')
+}
+
 }

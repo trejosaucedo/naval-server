@@ -18,11 +18,12 @@ export class TokenUtils {
     }
   }
 
-  static extractFromContext(ctx: HttpContext): string | null {
-    const auth = ctx.request.header('Authorization')
-    if (!auth || !auth.startsWith('Bearer ')) return null
-    return auth.replace('Bearer ', '')
-  }
+ static extractFromContext(ctx: HttpContext): string | null {
+  const auth = ctx.request.header('authorization');
+  if (!auth || !auth.startsWith('Bearer ')) return null;
+  return auth.replace('Bearer ', '').trim();
+}
+
 
   static unauthorizedResponse(response: HttpContext['response'], message: string) {
     return ResponseHelper.error(response, message, 401)

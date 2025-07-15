@@ -63,10 +63,17 @@ export class RoomService {
   async status(room: Room) {
     await room.load('player1')
     await room.load('player2')
+    // Busca el game_id si la sala está iniciada
+    let gameId = null
+    if (room.status === 'started') {
+      const game = await Game.query().where('room_id', room.id).first()
+      if (game) gameId = game.id
+    }
     return {
       status: room.status,
       player1: room.player1 ? { id: room.player1.id, name: room.player1.name } : null,
       player2: room.player2 ? { id: room.player2.id, name: room.player2.name } : null,
+      game_id: gameId,
     }
   }
 }

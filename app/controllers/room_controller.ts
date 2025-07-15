@@ -42,18 +42,19 @@ export default class RoomController {
   }
 
   async start({ params, user, response }: HttpContext) {
-    if (!user) return ResponseHelper.error(response, 'No autenticado', 401)
-    const room = await Room.find(params.id)
-    if (!room) return ResponseHelper.error(response, 'Sala no encontrada', 404)
-    if (room.player1Id !== user.id)
-      return ResponseHelper.error(response, 'Solo el anfitrión puede iniciar', 403)
-    try {
-      const result = await this.service.start(room)
-      return ResponseHelper.success(response, 'Partida iniciada', result)
-    } catch (error) {
-      return ResponseHelper.error(response, error.message, 400)
-    }
+  if (!user) return ResponseHelper.error(response, 'No autenticado', 401)
+  const room = await Room.find(params.id)
+  if (!room) return ResponseHelper.error(response, 'Sala no encontrada', 404)
+  if (room.player1Id !== user.id)
+    return ResponseHelper.error(response, 'Solo el anfitrión puede iniciar', 403)
+  try {
+    const result = await this.service.start(room)
+      return ResponseHelper.success(response, 'Partida iniciada', { game_id: result.game.id })
+  } catch (error) {
+    return ResponseHelper.error(response, error.message, 400)
   }
+}
+
 
   async leave({ params, user, response }: HttpContext) {
     if (!user) return ResponseHelper.error(response, 'No autenticado', 401)

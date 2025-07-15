@@ -54,4 +54,6 @@ export default class GameController {
       return ResponseHelper.error(response, err.message, 400)
     }
   }
+
+  
 }

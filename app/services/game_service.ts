@@ -13,20 +13,19 @@ export class GameService {
     return this.repo.findById(gameId)
   }
 
-  async getState(game: Game, userId: string): Promise<GameStateResponseDto | null> {
-    if (![game.player1Id, game.player2Id].includes(userId)) return null
-    await game.load('player1')
-    await game.load('player2')
-    await game.load('turns')
-
-    const isPlayer1 = game.player1Id === userId
-
+async getState(game: Game, userId: string): Promise<GameStateResponseDto | null> {
+    if (![game.player1Id, game.player2Id].includes(userId)) return null;
+    await game.load('player1');
+    await game.load('player2');
+    await game.load('turns');
+    const isPlayer1 = game.player1Id === userId;
     return {
       game_id: game.id,
       status: game.status,
       current_turn: game.currentTurn,
       is_my_turn: game.canPlayerMove(userId),
-      my_board: game.getPlayerBoard(userId),
+      my_board: isPlayer1 ? game.player1InitialBoard : game.player2InitialBoard,
+      opponent_board: isPlayer1 ? game.player2InitialBoard : game.player1InitialBoard,
       my_attacks: game.getPlayerAttacks(userId),
       opponent_attacks: game.getOpponentAttacks(userId),
       player1: { id: game.player1.id, name: game.player1.name },
@@ -34,76 +33,70 @@ export class GameService {
       winner_id: game.winnerId,
       my_hits: game.countHits(userId),
       opponent_hits: isPlayer1 ? game.countHits(game.player2Id) : game.countHits(game.player1Id),
-    }
+    };
   }
 
-  async attack(game: Game, userId: string, x: number, y: number) {
-    if (![game.player1Id, game.player2Id].includes(userId))
-      throw new Error('No tienes acceso a este juego')
-    await game.load('turns')
-    if (!game.canPlayerMove(userId)) throw new Error('No es tu turno o el juego ha terminado')
-    if (game.hasAttackedPosition(userId, x, y)) throw new Error('Ya atacaste esa posición')
+ async attack(game: Game, userId: string, x: number, y: number) {
+  if (![game.player1Id, game.player2Id].includes(userId))
+    throw new Error('No tienes acceso a este juego');
+  await game.load('turns');
+  if (!game.canPlayerMove(userId)) throw new Error('No es tu turno o el juego ha terminado');
+  if (game.hasAttackedPosition(userId, x, y)) throw new Error('Ya atacaste esa posición');
+  const trx = await Database.transaction();
+  try {
+    const opponentBoard = game.getOpponentBoard(userId);
+    const isHit = opponentBoard[x][y] === 1;
 
-    const trx = await Database.transaction()
-    try {
-      const opponentBoard = game.getOpponentBoard(userId)
-      const isHit = opponentBoard[x][y] === 1
-
-      // Adonis 6: max() regresa array de objetos
-      const maxResult = await Turn.query({ client: trx })
-        .where('game_id', game.id)
-        .max('turn_number')
-      const row = maxResult[0]
-      const turnNumber = row ? (Object.values(row)[0] as number) || 0 : 0
-
-      await Turn.create(
-        {
-          gameId: game.id,
-          playerId: userId,
-          attackX: x,
-          attackY: y,
-          isHit,
-          turnNumber: turnNumber + 1,
-        },
-        { client: trx }
-      )
-
-      await game.load('turns')
-
-      let finished = false
-      if (game.checkWinner(userId)) {
-        game.status = 'finished'
-        game.winnerId = userId
-        game.finishedAt = DateTime.local()
-        const winner = await User.find(userId, { client: trx })
-        const loserId = userId === game.player1Id ? game.player2Id : game.player1Id
-        const loser = await User.find(loserId, { client: trx })
-        if (winner) await winner.merge({ wins: winner.wins + 1 }).save()
-        if (loser) await loser.merge({ losses: loser.losses + 1 }).save()
-        finished = true
-      } else {
-        game.currentTurn = game.currentTurn === 1 ? 2 : 1
-      }
-      // Para guardar en transacción:
-      game.useTransaction(trx)
-      await game.save()
-      await trx.commit()
-
-      await game.load('turns')
-
-      return {
-        success: true,
-        hit: isHit,
-        winner_id: game.winnerId,
-        game_finished: finished,
-        current_turn: game.currentTurn,
-        my_hits: game.countHits(userId),
-      }
-    } catch (error) {
-      await trx.rollback()
-      throw error
+    // Fix: Obtener el turno de forma segura
+    const maxResult = await Turn.query({ client: trx })
+      .where('game_id', game.id)
+      .max('turn_number');
+    const row = maxResult[0];
+    let turnNumber = 0;
+    if (row) {
+      const prop = Object.keys(row)[0];
+      turnNumber = Number((row as any)[prop] ?? 0) || 0;
     }
+
+    await Turn.create(
+      { gameId: game.id, playerId: userId, attackX: x, attackY: y, isHit, turnNumber: turnNumber + 1 },
+      { client: trx }
+    );
+    await game.load('turns');
+
+    let finished = false;
+    if (game.checkWinner(userId)) {
+      game.status = 'finished';
+      game.winnerId = userId;
+      game.finishedAt = DateTime.local();
+      const winner = await User.find(userId, { client: trx });
+      const loserId = userId === game.player1Id ? game.player2Id : game.player1Id;
+      const loser = await User.find(loserId, { client: trx });
+      if (winner) await winner.merge({ wins: winner.wins + 1 }).save();
+      if (loser) await loser.merge({ losses: loser.losses + 1 }).save();
+      finished = true;
+    } else {
+      game.currentTurn = game.currentTurn === 1 ? 2 : 1;
+    }
+    game.useTransaction(trx);
+    await game.save();
+    await trx.commit();
+    await game.load('turns');
+
+    return {
+      success: true,
+      hit: isHit,
+      winner_id: game.winnerId,
+      game_finished: finished,
+      current_turn: game.currentTurn,
+      my_hits: game.countHits(userId),
+    };
+  } catch (error) {
+    await trx.rollback();
+    throw error;
   }
+}
+
 
   async getHistory(userId: string): Promise<GameHistoryItemDto[]> {
     const games = await this.repo.getHistoryByUserId(userId)
