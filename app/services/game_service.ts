@@ -13,12 +13,12 @@ export class GameService {
     return this.repo.findById(gameId)
   }
 
-async getState(game: Game, userId: string): Promise<GameStateResponseDto | null> {
-    if (![game.player1Id, game.player2Id].includes(userId)) return null;
-    await game.load('player1');
-    await game.load('player2');
-    await game.load('turns');
-    const isPlayer1 = game.player1Id === userId;
+  async getState(game: Game, userId: string): Promise<GameStateResponseDto | null> {
+    if (![game.player1Id, game.player2Id].includes(userId)) return null
+    await game.load('player1')
+    await game.load('player2')
+    await game.load('turns')
+    const isPlayer1 = game.player1Id === userId
     return {
       game_id: game.id,
       status: game.status,
@@ -33,7 +33,7 @@ async getState(game: Game, userId: string): Promise<GameStateResponseDto | null>
       winner_id: game.winnerId,
       my_hits: game.countHits(userId),
       opponent_hits: isPlayer1 ? game.countHits(game.player2Id) : game.countHits(game.player1Id),
-    };
+    }
   }
 
   async attack(game: Game, userId: string, x: number, y: number) {
@@ -48,52 +48,57 @@ async getState(game: Game, userId: string): Promise<GameStateResponseDto | null>
       const opponentBoard = game.getOpponentBoard(userId)
       const isHit = opponentBoard[x][y] === 1
 
-      // Adonis 6: max() regresa array de objetos
-      const maxResult = await Turn.query({ client: trx })
+      const maxResult = (await Turn.query({ client: trx })
         .where('game_id', game.id)
-        .max('turn_number')
-      const row = maxResult[0]
-      const turnNumber = row ? (Object.values(row)[0] as number) || 0 : 0
+        .max('turn_number as max')) as unknown as { max: number | null }[]
 
-    await Turn.create(
-      { gameId: game.id, playerId: userId, attackX: x, attackY: y, isHit, turnNumber: turnNumber + 1 },
-      { client: trx }
-    );
-    await game.load('turns');
+      const turnNumber = Number(maxResult[0]?.max) || 0
 
-    let finished = false;
-    if (game.checkWinner(userId)) {
-      game.status = 'finished';
-      game.winnerId = userId;
-      game.finishedAt = DateTime.local();
-      const winner = await User.find(userId, { client: trx });
-      const loserId = userId === game.player1Id ? game.player2Id : game.player1Id;
-      const loser = await User.find(loserId, { client: trx });
-      if (winner) await winner.merge({ wins: winner.wins + 1 }).save();
-      if (loser) await loser.merge({ losses: loser.losses + 1 }).save();
-      finished = true;
-    } else {
-      game.currentTurn = game.currentTurn === 1 ? 2 : 1;
+      await Turn.create(
+        {
+          gameId: game.id,
+          playerId: userId,
+          attackX: x,
+          attackY: y,
+          isHit,
+          turnNumber: turnNumber + 1,
+        },
+        { client: trx }
+      )
+      await game.load('turns')
+
+      let finished = false
+      if (game.checkWinner(userId)) {
+        game.status = 'finished'
+        game.winnerId = userId
+        game.finishedAt = DateTime.local()
+        const winner = await User.find(userId, { client: trx })
+        const loserId = userId === game.player1Id ? game.player2Id : game.player1Id
+        const loser = await User.find(loserId, { client: trx })
+        if (winner) await winner.merge({ wins: winner.wins + 1 }).save()
+        if (loser) await loser.merge({ losses: loser.losses + 1 }).save()
+        finished = true
+      } else {
+        game.currentTurn = game.currentTurn === 1 ? 2 : 1
+      }
+      game.useTransaction(trx)
+      await game.save()
+      await trx.commit()
+      await game.load('turns')
+
+      return {
+        success: true,
+        hit: isHit,
+        winner_id: game.winnerId,
+        game_finished: finished,
+        current_turn: game.currentTurn,
+        my_hits: game.countHits(userId),
+      }
+    } catch (error) {
+      await trx.rollback()
+      throw error
     }
-    game.useTransaction(trx);
-    await game.save();
-    await trx.commit();
-    await game.load('turns');
-
-    return {
-      success: true,
-      hit: isHit,
-      winner_id: game.winnerId,
-      game_finished: finished,
-      current_turn: game.currentTurn,
-      my_hits: game.countHits(userId),
-    };
-  } catch (error) {
-    await trx.rollback();
-    throw error;
   }
-}
-
 
   async getHistory(userId: string): Promise<GameHistoryItemDto[]> {
     const games = await this.repo.getHistoryByUserId(userId)
@@ -114,10 +119,10 @@ async getState(game: Game, userId: string): Promise<GameStateResponseDto | null>
 
   async getDetails(game: Game, userId: string): Promise<GameDetailsResponseDto | null> {
     if (![game.player1Id, game.player2Id].includes(userId)) return null
+
     await game.load('player1')
     await game.load('player2')
     await game.load('turns', (builder) => builder.preload('player'))
-    const isPlayer1 = game.player1Id === userId
 
     return {
       game: {
@@ -128,8 +133,8 @@ async getState(game: Game, userId: string): Promise<GameStateResponseDto | null>
         winner_id: game.winnerId,
       },
       players: {
-        player1: game.player1.name,
-        player2: game.player2.name,
+        player1: game.player1?.name ?? '',
+        player2: game.player2?.name ?? '',
       },
       boards: {
         my_board: game.getPlayerBoard(userId),
@@ -137,7 +142,9 @@ async getState(game: Game, userId: string): Promise<GameStateResponseDto | null>
       },
       attacks: {
         my_attacks: game.getPlayerAttacks(userId),
-        opponent_attacks: game.getOpponentAttacks(isPlayer1 ? game.player2Id : game.player1Id),
+        opponent_attacks: game.getPlayerAttacks(
+          userId === game.player1Id ? game.player2Id : game.player1Id
+        ),
       },
       turns: game.turns,
     }

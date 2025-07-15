@@ -94,12 +94,11 @@ export default class Game extends BaseModel {
     return board
   }
 
- canPlayerMove(userId: string): boolean {
-  if (this.status !== 'playing') return false;
-  if (this.currentTurn === 1 && userId === this.player1Id) return true;
-  if (this.currentTurn === 2 && userId === this.player2Id) return true;
-  return false;
-}
+  canPlayerMove(userId: string): boolean {
+    if (this.status !== 'playing') return false
+    if (this.currentTurn === 1 && userId === this.player1Id) return true
+    return this.currentTurn === 2 && userId === this.player2Id
+  }
 
   hasAttackedPosition(userId: string, x: number, y: number): boolean {
     if (!Array.isArray(this.turns)) throw new Error('Turns must be loaded')
