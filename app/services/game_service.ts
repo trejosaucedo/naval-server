@@ -36,27 +36,24 @@ async getState(game: Game, userId: string): Promise<GameStateResponseDto | null>
     };
   }
 
- async attack(game: Game, userId: string, x: number, y: number) {
-  if (![game.player1Id, game.player2Id].includes(userId))
-    throw new Error('No tienes acceso a este juego');
-  await game.load('turns');
-  if (!game.canPlayerMove(userId)) throw new Error('No es tu turno o el juego ha terminado');
-  if (game.hasAttackedPosition(userId, x, y)) throw new Error('Ya atacaste esa posición');
-  const trx = await Database.transaction();
-  try {
-    const opponentBoard = game.getOpponentBoard(userId);
-    const isHit = opponentBoard[x][y] === 1;
+  async attack(game: Game, userId: string, x: number, y: number) {
+    if (![game.player1Id, game.player2Id].includes(userId))
+      throw new Error('No tienes acceso a este juego')
+    await game.load('turns')
+    if (!game.canPlayerMove(userId)) throw new Error('No es tu turno o el juego ha terminado')
+    if (game.hasAttackedPosition(userId, x, y)) throw new Error('Ya atacaste esa posición')
 
-    // Fix: Obtener el turno de forma segura
-    const maxResult = await Turn.query({ client: trx })
-      .where('game_id', game.id)
-      .max('turn_number');
-    const row = maxResult[0];
-    let turnNumber = 0;
-    if (row) {
-      const prop = Object.keys(row)[0];
-      turnNumber = Number((row as any)[prop] ?? 0) || 0;
-    }
+    const trx = await Database.transaction()
+    try {
+      const opponentBoard = game.getOpponentBoard(userId)
+      const isHit = opponentBoard[x][y] === 1
+
+      // Adonis 6: max() regresa array de objetos
+      const maxResult = await Turn.query({ client: trx })
+        .where('game_id', game.id)
+        .max('turn_number')
+      const row = maxResult[0]
+      const turnNumber = row ? (Object.values(row)[0] as number) || 0 : 0
 
     await Turn.create(
       { gameId: game.id, playerId: userId, attackX: x, attackY: y, isHit, turnNumber: turnNumber + 1 },
