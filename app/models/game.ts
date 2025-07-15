@@ -139,10 +139,13 @@ export default class Game extends BaseModel {
   }
 
   checkWinner(userId: string): boolean {
-    if (!Array.isArray(this.turns)) throw new Error('Turns must be loaded')
-    const hits = this.turns.filter((t) => t.playerId === userId && t.isHit).length
-    return hits >= 15
-  }
+  if (!Array.isArray(this.turns)) throw new Error('Turns must be loaded')
+  const hits = this.turns.filter((t) => t.playerId === userId && t.isHit).length
+  console.log('[DEBUG][checkWinner] userId:', userId, 'hits:', hits)
+  return hits >= 15
+}
+
+
 
   countHits(userId: string): number {
     if (!Array.isArray(this.turns)) throw new Error('Turns must be loaded')
