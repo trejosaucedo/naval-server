@@ -49,7 +49,6 @@ export class GameService {
       const opponentBoard = game.getOpponentBoard(userId)
       const isHit = opponentBoard[x][y] === 1
 
-      // Adonis 6: max() regresa array de objetos
       const maxResult = await Turn.query({ client: trx })
         .where('game_id', game.id)
         .max('turn_number')
